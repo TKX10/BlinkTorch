@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:torch_light/torch_light.dart';
 import 'dart:isolate';
+
+import 'morse.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,6 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int cycleTime = 1000;
   int pageIndex = 0;
   int segmentsCount = 0;
+  String Message = "";
   bool torch = false;
   Set<int> selected = Set();
   Future<void>? runBlink() async {
@@ -63,7 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
             count = 16;
             break;
         }
-        for(int i=0; i<count; i++){
+        for(int i=0; i<count&&active; i++){
           if(selected.contains(i)&&!torch){
             await TorchLight.enableTorch();
             torch = true;
@@ -77,7 +81,41 @@ class _MyHomePageState extends State<MyHomePage> {
       }
       await TorchLight.disableTorch();
   }
+  Future<void> runMorse() async{
+    String message = Message.toLowerCase();
+    List<MChar> durations = [];
+    message.split('').forEach(
+     (item){
+       if(Morse.characters.containsKey(item)){
+         Morse.characters[item]?.forEach((x){
+           if(x){
+             durations.addAll([MChar(true,3),MChar(false,1)]);
+           }
+           else{
+             durations.addAll([MChar(true,1),MChar(false,1)]);
+           }
+         });
+         durations.add(MChar(false, 3));
+       }
+       else if(item == " "){
+         durations.add(MChar(false,7));
+       }
+    });
+    for(int i = 0;i < durations.length;i++ ){
+     var item = durations[i];
+     if(item.isOn){
+       await TorchLight.enableTorch();
+       await Future.delayed(Duration(milliseconds: item.blocks*cycleTime));
+       await TorchLight.disableTorch();
+     }
+     else {
+       await Future.delayed(Duration(milliseconds: item.blocks*cycleTime));
+     }
+    }
 
+   active = false;
+   setState(() {});
+  }
   @override
   Widget build(BuildContext context) {
     //runBlink();
@@ -106,6 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
           destinations: [
             NavigationDestination(icon: Icon(Icons.change_circle,color: Color(0xFF1B7D7F)), label: 'Simple'),
             NavigationDestination(icon: Icon(Icons.segment_outlined,color: Color(0xFF1B7D7F)), label: 'Rythm'),
+            NavigationDestination(icon: Icon(Icons.power_input,color: Color(0xFF1B7D7F)), label: 'Rythm'),
           ],
         ),
       body:<Widget>[Center(
@@ -186,6 +225,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           });
                           if(x){
                             unawaited(runRythm());
+                          }
+                          else{
+                            TorchLight.disableTorch();
                           }
                         }
                     ),
@@ -293,8 +335,66 @@ class _MyHomePageState extends State<MyHomePage> {
               ],
             ),
           ),
+        ),
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            spacing: 8,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  onChanged: (x){Message = x; },
+                  maxLength: 255,
+                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                  decoration: InputDecoration(
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(16)),
+                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black,strokeAlign: 3),borderRadius: BorderRadius.circular(16)),
+                      counterStyle: TextStyle(color: Colors.black,fontSize: 15)
+                  ),
+                ),
+              ),
+              Padding(padding: EdgeInsets.all(24)),
+              Text('Duration of one Block'),
+              Slider(
+                  label: cycleTime.toString(),
+                  value: cycleTime.toDouble(),
+                  year2023: false,
+                  max: 1000,
+                  min: 0,
+                  divisions: 1000,
+                  onChanged: (x){
+                    setState(() {
+                      cycleTime = x.toInt();
+                    });
+                  }
+              ),
+              Text('${cycleTime/1000}s'),
+              TextButton.icon(
+                  onPressed: () async {
+                    if(active){
+                      setState(() {
+                        active = false;
+                      });
+                    }
+                    else{
+
+                      setState(() {
+                        active = true;
+                      });
+                      unawaited(runMorse());
+                    }
+                  },
+                  label: !active? Text('Start'):Text('Stop'),
+                  icon: !active? Icon(Icons.play_arrow_outlined): Icon(Icons.stop),
+              ),
+            ],
+          ),
         )
       ][pageIndex]
     );
   }
 }
+
+
+
