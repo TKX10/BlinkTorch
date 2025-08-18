@@ -1,10 +1,7 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:torch_light/torch_light.dart';
-import 'dart:isolate';
-
 import 'morse.dart';
 
 void main() {
@@ -89,19 +86,19 @@ class _MyHomePageState extends State<MyHomePage> {
        if(Morse.characters.containsKey(item)){
          Morse.characters[item]?.forEach((x){
            if(x){
-             durations.addAll([MChar(true,3),MChar(false,1)]);
+             durations.addAll([MChar(true, 3),MChar(false, 1)]);
            }
            else{
-             durations.addAll([MChar(true,1),MChar(false,1)]);
+             durations.addAll([MChar(true, 1),MChar(false, 1)]);
            }
          });
-         durations.add(MChar(false, 3));
+         durations.add(MChar(false, 2));
        }
        else if(item == " "){
-         durations.add(MChar(false,7));
+         durations.add(MChar(false, 4));
        }
     });
-    for(int i = 0;i < durations.length;i++ ){
+    for(int i = 0;i < durations.length&&active;i++ ){
      var item = durations[i];
      if(item.isOn){
        await TorchLight.enableTorch();
@@ -132,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
         bottomNavigationBar: NavigationBar(
           height: 75,
           backgroundColor: Colors.transparent,
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
           selectedIndex: pageIndex,
           onDestinationSelected: (int index){
             active = false;
@@ -143,8 +140,8 @@ class _MyHomePageState extends State<MyHomePage> {
           labelTextStyle: WidgetStatePropertyAll<TextStyle>(TextStyle(color: Colors.black,fontSize: 15)),
           destinations: [
             NavigationDestination(icon: Icon(Icons.change_circle,color: Color(0xFF1B7D7F)), label: 'Simple'),
-            NavigationDestination(icon: Icon(Icons.segment_outlined,color: Color(0xFF1B7D7F)), label: 'Rythm'),
-            NavigationDestination(icon: Icon(Icons.power_input,color: Color(0xFF1B7D7F)), label: 'Rythm'),
+            NavigationDestination(icon: Icon(Icons.calendar_view_month,color: Color(0xFF1B7D7F)), label: 'Rythm'),
+            NavigationDestination(icon: Icon(Icons.power_input,color: Color(0xFF1B7D7F)), label: 'Morse'),
           ],
         ),
       body:<Widget>[Center(
@@ -341,28 +338,37 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             spacing: 8,
             children: [
+              Text('Morse Code',style: TextStyle(fontSize: 35),),
+              Padding(padding: EdgeInsets.all(8)),
+              Text('Your Text'),
               Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  onChanged: (x){Message = x; },
-                  maxLength: 255,
-                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                  decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(16)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black,strokeAlign: 3),borderRadius: BorderRadius.circular(16)),
-                      counterStyle: TextStyle(color: Colors.black,fontSize: 15)
+                padding: const EdgeInsets.only(left:16.0,right:16.0),
+                child: SizedBox(
+                  height: 150,
+                  child: TextField(
+                    onChanged: (x){ Message = x; },
+                    maxLength: 255,
+                    minLines: null,
+                    maxLines: null,
+                    textAlignVertical: TextAlignVertical(y:-1),
+                    expands: true,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                    decoration: InputDecoration(
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black),borderRadius: BorderRadius.circular(16)),
+                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black,strokeAlign: 3),borderRadius: BorderRadius.circular(16)),
+                        counterStyle: TextStyle(color: Colors.black,fontSize: 15)
+                    ),
                   ),
                 ),
               ),
               Padding(padding: EdgeInsets.all(24)),
               Text('Duration of one Block'),
               Slider(
-                  label: cycleTime.toString(),
                   value: cycleTime.toDouble(),
                   year2023: false,
                   max: 1000,
                   min: 0,
-                  divisions: 1000,
+                  divisions: 100,
                   onChanged: (x){
                     setState(() {
                       cycleTime = x.toInt();
@@ -378,7 +384,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       });
                     }
                     else{
-
                       setState(() {
                         active = true;
                       });
