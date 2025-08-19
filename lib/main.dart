@@ -320,8 +320,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     value: cycleTime.toDouble(),
                     year2023: false,
                     max: 1000,
-                    min: 0,
-                    divisions: 1000,
+                    min: 1,
+                    divisions: 999,
                     onChanged: (x){
                       setState(() {
                         cycleTime=x.toInt();
@@ -367,8 +367,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   value: cycleTime.toDouble(),
                   year2023: false,
                   max: 1000,
-                  min: 0,
-                  divisions: 100,
+                  min: 1,
+                  divisions: 999,
                   onChanged: (x){
                     setState(() {
                       cycleTime = x.toInt();
@@ -400,6 +400,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
-
-
